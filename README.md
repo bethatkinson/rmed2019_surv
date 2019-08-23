@@ -32,25 +32,15 @@ This workshop is targeted at people who work in the medical field with
 survival data (or who anticipate needing to work with it). A very basic
 understanding of survival analysis will be helpful, though not required.
 
-  - Have you written or collaborated on a medical manuscript to submit
-    for publication to a peer-reviewed journal? Are you familiar with
-    common components of a medical manuscript like a “Table One”, other
-    summary tables, plots, text and citations?
+  - Have you had to manipulate data prior to running time-to-event
+    analysis?
 
-  - Have you downloaded and used R a bit? Can you install and load
-    packages?
-    
-      - *Even better,* have you used `tidyverse` packages like `ggplot2`
-        and `dplyr`?
+  - Do you anticipate needing to run analyses with time-dependent
+    covariates or multiple endpoints?
 
-  - Have you used R with the RStudio Integrated Development Environment
-    (IDE)? Are you familiar with the various “panes” and “tabs”? For
-    instance, can you quickly find all objects in your current global
-    environment, and can you send R code from a source file (.R, .Rmd)
-    to the console?
+  - Have you downloaded and used R a bit?
     
-      - *Even better,* have you tried to knit 🧶 an R Markdown document
-        to some kind of output format like HTML, PDF, or Word?
+      - *Even better,* have you used the `survival` package?
 
 ## Schedule
 
@@ -68,13 +58,51 @@ understanding of survival analysis will be helpful, though not required.
 ## Instructor
 
 Beth Atkinson has been a statistician at Mayo Clinic for 29 years and
-has worked in Splus then R for that entire time. She has worked
-extensively with Terry Therneau, author of the `survival` package.
-Currently they are working on a book focused on various aspects of
-survival analysis, including an on-line compendium of detailed
-examples.
+has worked with Splus then R since starting at Mayo. She has worked
+extensively with Terry Therneau, author of the `survival` package, and
+has spent many hours wrangling data so that it is set up appropriately
+for various time-to-event analyses. Currently she is working with Terry
+and Cindy Crowson on a book focused on time-to-event analyses, which
+will include an on-line compendium of detailed examples.
 
 ## Pre-work
+
+Welcome to the [Wrangling Survival
+Data](https://github.com/bethatkinson/rmed2019_surv) workshop\! We look
+forward to meeting you in person. Before attending the workshop, please
+complete the following prework:
+
+<br> <br>
+
+1.  Sign up for a free RStudio Cloud account at <https://rstudio.cloud/>
+    before the workshop. I recommend logging in with an existing Google
+    or GitHub account, if you have one (rather than creating a new
+    account with another password you have to remember).
+
+2.  Please bring a laptop that has the following installed:
+    
+      - A recent version of R (\>=3.6.0), which is available for free at
+        <https://cloud.r-project.org/>
+      - A recent version of RStudio Desktop (\>=1.2), available for free
+        ([RStudio Desktop Open Source
+        License](https://www.rstudio.com/products/rstudio/download/#download))
+      - The R packages we will use, which you can install by connecting
+        to the internet, opening RStudio, and running at the command
+        line:
+    
+    <!-- end list -->
+    
+    ``` r
+    install.packages(c("survival", "survminer", "tidyverse"))
+    ```
+
+3.  Don’t forget your power cord\!
+
+On the day of the workshop, I’ll provide you with an RStudio Cloud
+project that contains all of the course materials. We will use the
+software listed above only as an important backup should there be
+problems with the on-site internet
+connection.
 
 -----
 
