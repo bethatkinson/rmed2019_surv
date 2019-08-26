@@ -1,0 +1,112 @@
+---
+title: "Basic_Survival"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+
+## set up options for markdown report
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, collapse = TRUE)
+```
+
+# Explore `ovarian` in the `ovarian` package.
+
+```{r}
+glimpse(ovarian)
+```
+
+# Create a Kaplan-Meier object
+
+Use the `survfit` function to create a `survfit` object for further exploration using the endpoint variables `futime` and `fustat`, stratified by **`rx`**.
+
+```{r}
+fit <- survfit(Surv(futime, fustat) ~ rx, data=ovarian)
+fit
+```
+
+* What is the median survival time?
+* What is the 25th percentile survival time?
+
+```{r}
+quantile(fit, probs=.25)
+```
+
+## Plot a KM curve
+
+1. Create plot using the `survival` package
+   + Use years as the time scale
+   + Trim the x-axis
+   + Add labels
+   
+```{r}
+plot(fit, xscale=365, xlim=c(0, 2*365), 
+     col=1:2, lty=1:2, 
+     xlab='Time since enrollment, years', 
+     ylab='Survival probability')
+legend('topright', legend=names(fit$strata), 
+       col=1:2, lty=1:2, bty='n')
+```
+
+2. Repeat plot using the `survminer` package
+
+```{r}
+ggsurvplot(fit, xscale=365, xlim=c(0, 2*365), 
+           censor=FALSE, break.x.by=365/2,
+           risk.table=TRUE,
+           xlab='Time since enrollment, years', 
+           ylab='Survival probability')
+```
+
+3. Add counts under base R plot
+
+```{r}
+par(cex=.9, mai=c(.8,1.2,.5,.1))
+par(fig=c(x1=0,x2=1,y1=.2,y2=1))
+plot(fit, xscale=365, xlim=c(0, 2*365), 
+     col=1:2, lty=1:2, lwd=2,
+     xlab='Time since enrollment, years', 
+     ylab='Survival probability')
+title('Base R, risk table')
+legend('topright', legend=names(fit$strata), 
+       col=1:2, lty=1:2, bty='n')
+par(fig=c(0,1,0,.2), new=TRUE, mai=c(.1,1.2,0,.1))
+tmp <- summary(fit, times=seq(0,2,.5), scale=365)
+plot(c(0,2),c(0,2), axes=FALSE, pch='', xlab='', ylab='', xlim=c(0,2))
+text(x=c(tmp$time), y=rep(2:1, each=5), labels=c(tmp$n.risk))
+axis(2, at=2:1, c('rx=1','rx=2'), las=1, lty=0)
+par(mai=c(1.02,.82,.82,.42), fig=c(0,1,0,1))
+```
+
+## Create a summary by 6 month intervals
+
+```{r}
+summary(fit, time=seq(0,2,.5), scale=365)
+```
+
+## Create summary using the `arsenal::tableby` function
+
+```{r, results='asis'}
+tab <- tableby(rx ~ age + resid.ds + Surv(futime,fustat), data=ovarian)
+summary(tab)
+```
+
+# Fit a Cox model
+
+Use the covariates age, resid.ds, rx, and ecog.ps.
+
+```{r}
+# standard summary from Cox model
+cfit <- coxph(Surv(futime,fustat) ~ age + resid.ds + rx + ecog.ps, data=ovarian)
+summary(cfit)
+
+# Save results in a dataframe using the tidy function in broom
+tidy(cfit, exponentiate=TRUE)
+```

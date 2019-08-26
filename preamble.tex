@@ -1,0 +1,42 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Define Beamer Layout
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Define outer and font themes
+\useoutertheme{split}
+\usefonttheme[onlysmall]{structurebold}
+
+%% Define Mayo colors from brand standards page
+\definecolor{mblue}{cmyk}{1,.68,0,0}
+\definecolor{mdarkblue}{cmyk}{1,.87,0,.42}
+
+%% Set Colors
+\setbeamercolor{normal text}{fg=black}
+\setbeamercolor{structure}{fg=black}
+
+\setbeamercolor{frametitle}{fg=white,bg=mblue}
+\setbeamercolor{title}{fg=white, bg=mblue}
+\setbeamercolor{titlelike}{fg=white, bg=mblue}
+
+\setbeamercolor*{palette primary}{fg=white,bg=mblue}
+\setbeamercolor*{palette secondary}{fg=white,bg=mblue}
+\setbeamercolor*{palette tertiary}{fg=white,bg=mdarkblue}
+\setbeamercolor*{palette quaternary}{fg=white,bg=mdarkblue}
+
+\setbeamercolor*{item}{fg=mblue}
+
+%% Add Mayo logo from brand standards page
+\logo{\includegraphics[height=.8cm]{figures/MC_stack_4c.png}}
+
+% make code-output smaller
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{fontsize=\small,commandchars=\\\{\}}
+
+% make console-output smaller:
+  \makeatletter
+\def\verbatim{\small\@verbatim \frenchspacing\@vobeyspaces \@xverbatim}
+\makeatother
+
+% add page numbers
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[page number]
+

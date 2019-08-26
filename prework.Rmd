@@ -16,7 +16,8 @@ Welcome to the [Wrangling Survival Data](https://github.com/bethatkinson/rmed201
     + The R packages we will use, which you can install by connecting to the internet, opening RStudio, and running at the command line:
 
     ```{r pkg-list, eval=FALSE}
-    install.packages(c("survival", "survminer", "tidyverse","arsenal"))
+    install.packages(c("survival", "survminer", "tidyverse",
+                       "lubridate", "arsenal", "broom"))
     ```
 
 1. Don't forget your power cord!
