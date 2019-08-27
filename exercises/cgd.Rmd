@@ -1,0 +1,112 @@
+---
+title: "Create time-dependent covariate using the jasa data"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+
+## set up options for markdown report
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, collapse = TRUE)
+```
+
+This example highlights how `tmerge` can be used to create multiple events/person.
+
+## Outline
+
+* Chronic Granulotamous Disease (`cgd0`)
+  + id, treat, sex, age
+  + futime: follow-up time
+  + etime1-etime7: up to 7 infection times/subject
+
+* Create a dataset with these variables, 
+where `enum` is the interval number/id
+
+
+|id | tstart | tstop | infect | treat | enum |
+|:--|:-------|:------|:-------|:------|:-----|
+| 1 | .      | .     | .      | .     | .    |
+
+
+## Explore `cgd0` dataset 
+
+```{r}
+glimpse(cgd0)
+
+# How many people have 7 infections? 
+table(!is.na(cgd0$etime7))
+
+cgd0 %>% filter(!is.na(etime7))
+```
+
+## Use tmerge to create new dataset
+
+Define follow-up region
+
+```{r}
+newcgd <- tmerge(data1=cgd0, data2=cgd0, 
+                 id=id, tstop=futime)
+
+attr(newcgd, "tcount")
+newcgd[newcgd$id==2, c('id','age','tstart','tstop')]
+```
+
+Add in events (`etime1` - `etime7`)
+
+```{r}
+newcgd <- tmerge(newcgd, cgd0, id=id,
+                 infect=event(etime1), infect=event(etime2),
+                 infect=event(etime3), infect=event(etime4),
+                 infect=event(etime5), infect=event(etime6),
+                 infect=event(etime7))
+attr(newcgd, "tcount")
+newcgd[newcgd$id==2, c('id','age','tstart','tstop', 'infect')]
+```
+
+What is trailing?  Is it ok?
+
+```{r}
+cgd0 %>% filter(etime2==futime)
+
+newcgd %>% filter(id==87)
+```
+
+
+Add in `enum` which is a time-dependent covariate.
+
+```{r}
+newcgd <- tmerge(newcgd, newcgd, id=id,
+                 enum=cumtdc(tstart))
+
+attr(newcgd, "tcount")
+newcgd[newcgd$id==2, c('id','age','tstart','tstop', 'infect','enum')]
+
+table(newcgd$enum)
+```
+
+## Run a Cox model
+
+```{r, echo=TRUE}
+fit <- coxph(Surv(tstart,tstop,infect) ~ treat + steroids + inherit, 
+             id=id, data=newcgd)
+fit
+```
+
+Look at the first infection versus all infections
+
+```{r}
+fit0 <- coxph(Surv(tstart,tstop,infect) ~ treat + steroids + inherit, 
+              id=id, data=newcgd, subset=enum==1)
+round(cbind(first=coef(fit0), all=coef(fit)), 3)
+```
+
+How many events were added after the first event?
+
+What happens if you run the `coxph` function without `id=id`?
