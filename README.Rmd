@@ -20,8 +20,8 @@ In this four-hour workshop, I will review basic code for standard survival analy
 
 ## Learning objectives
 
-* Understand need for different data formats
-* Create start/stop data using new tools
+* Understand different survival data formats
+* Create start/stop data using functions in the `survival` package
 * Check data for errors
 * Create multistate data and perform basic analysis
 
@@ -31,9 +31,10 @@ This workshop is targeted at people who work in the medical field with survival 
 
 * Have you had to manipulate data prior to running time-to-event analysis? 
 * Do you anticipate needing to run analyses with time-dependent covariates or multiple endpoints?
+   + *Even better,* have you used the `survival` package? 
 
 * Have you used R with the RStudio Integrated Development Environment (IDE)? Are you familiar with the various “panes” and “tabs”? For instance, can you quickly find all objects in your current global environment, and can you send R code from a source file (.R, .Rmd) to the console?
-  + *Even better,* have you used the `survival` package? 
+  
   
 ## Schedule
 

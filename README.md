@@ -20,59 +20,65 @@ survival analysis, then work through examples for more complex
 scenarios. The majority of the focus will be on creating the correct
 dataset using tools available in the `survival` package. The final
 portion of the class will explore the most complex scenario - multistate
-data.
+data. The format will be a mix of lecture and hands-on exercises.
 
 ## Learning objectives
 
-\[ADD LEARNING OBJECTIVES\]
+  - Understand different survival data formats
+  - Create start/stop data using functions in the `survival` package
+  - Check data for errors
+  - Create multistate data and perform basic analysis
 
 ## Is this course for me?
 
 This workshop is targeted at people who work in the medical field with
 survival data (or who anticipate needing to work with it). A very basic
 understanding of survival analysis will be helpful, though not required.
+A basic understanding of R is assumed.
 
   - Have you had to manipulate data prior to running time-to-event
     analysis?
-
   - Do you anticipate needing to run analyses with time-dependent
     covariates or multiple endpoints?
-
-  - Have you downloaded and used R a bit?
-    
       - *Even better,* have you used the `survival` package?
+  - Have you used R with the RStudio Integrated Development Environment
+    (IDE)? Are you familiar with the various “panes” and “tabs”? For
+    instance, can you quickly find all objects in your current global
+    environment, and can you send R code from a source file (.R, .Rmd)
+    to the console?
 
 ## Schedule
 
-| Time          | Activity                                 |
-| :------------ | :--------------------------------------- |
-| 01:00 - 01:50 | Session 1 (basic analysis, motivation)   |
-| 01:50 - 02:00 | *Break*                                  |
-| 02:00 - 02:45 | Session 2 (intro to tools)               |
-| 02:45 - 03:00 | *Break*                                  |
-| 03:00 - 03:50 | Session 3 (checking data, common errors) |
-| 03:50 - 04:00 | *Break*                                  |
-| 04:00 - 04:45 | Session 4 (multistate example)           |
-| 04:45 - 05:00 | Wrap-up / Overtime                       |
+| Time          | Activity                                   |
+| :------------ | :----------------------------------------- |
+| 01:00 - 01:50 | Session 1 (basic analysis, motivation)     |
+| 01:50 - 02:00 | *Break*                                    |
+| 02:00 - 02:50 | Session 2 (intro to tools)                 |
+| 02:50 - 03:00 | *Break*                                    |
+| 03:00 - 03:50 | Session 3 (checking data, common mistakes) |
+| 03:50 - 04:00 | *Break*                                    |
+| 04:00 - 04:50 | Session 4 (multistate data)                |
+| 04:50 - 05:00 | Wrap-up / Overtime                         |
 
 ## Instructor
 
 Beth Atkinson has been a statistician at Mayo Clinic for 29 years and
-has worked with Splus then R since starting at Mayo. She has worked
-extensively with Terry Therneau, author of the `survival` package, and
-has spent many hours wrangling data so that it is set up appropriately
-for various time-to-event analyses. Currently she is working with Terry
-and Cindy Crowson on a book focused on time-to-event analyses, which
-will include an on-line compendium of detailed examples.
+has worked with Splus then R since starting at Mayo, including
+development work on the `rpart` package. She has worked extensively with
+Terry Therneau, author of the `survival` package, and has spent many
+hours wrangling data so that it is set up appropriately for
+time-to-event analyses. Currently she is working with Terry and Cindy
+Crowson on a book focused on time-to-event analyses, which will include
+an on-line compendium of detailed examples.
 
 ## Pre-work
 
 Welcome to the [Wrangling Survival
-Data](https://github.com/bethatkinson/rmed2019_surv) workshop\! We look
+Data](https://github.com/bethatkinson/rmed2019_surv) workshop\! I look
 forward to meeting you in person. Before attending the workshop, please
 complete the following prework:
 
-<br> <br>
+<br>
 
 1.  Sign up for a free RStudio Cloud account at <https://rstudio.cloud/>
     before the workshop. I recommend logging in with an existing Google
@@ -93,7 +99,8 @@ complete the following prework:
     <!-- end list -->
     
     ``` r
-    install.packages(c("survival", "survminer", "tidyverse"))
+    install.packages(c("survival", "survminer", "tidyverse",
+                       "lubridate", "arsenal", "broom"))
     ```
 
 3.  Don’t forget your power cord\!
