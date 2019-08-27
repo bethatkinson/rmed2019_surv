@@ -1,5 +1,5 @@
 ---
-title: "Create time-dependent covariate using the jasa data"
+title: "Create multipe events using the cgd0 data"
 author: "Beth Atkinson"
 output: html_document
 ---
@@ -115,3 +115,9 @@ round(cbind(first=coef(fit0), all=coef(fit)), 3)
 How many events were added after the first event?
 
 What happens if you run the `coxph` function without `id=id`?
+
+## Run `survcheck` on this new data
+
+```{r}
+survcheck(Surv(tstart, tstop, infect) ~ treat + steroids, id=id, data=newcgd)
+```

@@ -1,0 +1,202 @@
+---
+title: "Create multistate events using the mgus2 data"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+
+## set up options for markdown report
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+               prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
+
+options(stringsAsFactors=F,
+        contrasts=c("contr.treatment","contr.poly"),
+        show.signif.stars = FALSE)
+```
+
+This exercise is an example of creating competing risk and multistate data using the `tmerge` function.
+
+## Description of the MGUS cohort.
+
+Monoclonal Gammopathy of Undetermined Significance (MGUS):
+
+* Subjects with a dominant clone in their plasma cell population,
+      but without malignancy ($\ge 2$\% of plasma cells in the clone).  
+* Normally found incidentally to other tests.
+* Should the patient be worried?
+* About 1\% per year convert to overt malignancy.
+* Essentially independent of age and sex.
+
+
+* 1384 subjects with monoclonal gammopathy of undetermined significance
+      (MGUS)
+* R. Kyle, New Engl J Med 346:564-569 (2002)
+* Questions
+   + Pattern of death and progression
+   + Relationship to age, sex, hemoglobin, creatinine,
+     and amount of protein in the "spike"
+
+The `mgus2` dataset has two sets of variables that we are interested in. Time and event variables for:
+
+* Progression (i.e., PCM): ptime and pstat.
+* Death: futime and death.
+
+```{r}
+# look at the dataset
+glimpse(mgus2)
+```
+
+## Create a Diagram - Competing Risk
+
+```{r}
+# Create names for the possible states
+states <- c("MGUS", "PCM", "Death")
+
+# Create matrix describing relationship between states
+connect <- matrix(0, nrow=3, ncol=3, 
+                  dimnames=list(states, states))
+
+# A non-zero element indicates that an arrow should be 
+# drawn between state i (row) and state j (column)
+connect[1, c(2,3)] <- 1
+connect
+
+# Plot
+statefig(layout=c(1,2), connect)
+```
+
+## Create Data and Analyze for Competing Risk
+
+Only need 1st event for each subject, so we only need 1 obs/person.
+
+```{r}
+# time variable will be follow-up time if there is no PCM, 
+# and PCM time otherwise
+etime <- with(mgus2, ifelse(pstat==0, futime, ptime))
+
+# event variable will be 0 for censor or 2 for death 
+# if there is no PCM, and 1 for PCM
+event <- with(mgus2, ifelse(pstat==0, 2*death, 1))
+
+# event variable must be a factor for multistate
+event <- factor(event, 0:2, 
+                labels=c("censor", "pcm", "death"))
+
+# confirm coding makes sense
+library(arsenal)
+summary(freqlist(~ event+pstat+death, data=mgus2))
+```
+
+Plot Aalen-Johansen, probability of event
+
+```{r}
+fit <- survfit(Surv(etime, event) ~ sex, data=mgus2)
+plot(fit, col=c(1,1,2,2), lty=c(2,1,2,1), xscale=12, 
+     xlab="Years post MGUS diagnosis", ylab="Probability")
+
+# short-cut for creating the group labels
+temp.label <- c(outer(c("F:","M:"), 
+                      c("PCM","death"), paste))
+legend("topleft", c(temp.label), 
+       col=c(1,1,2,2), lty=c(2,1,2,1), lwd=2, bty='n')
+
+## Double check the legend...
+summary(fit, time=20, scale=12)
+```
+
+Now subset to PCM event and just plot those curves.
+
+```{r}
+fit$states # columns
+fit$strata # rows
+
+plot(fit[,2], col=1, lty=2:1,
+     xscale=12, lwd=2, 
+     xlab="Years post MGUS diagnosis", ylab="Probability, PCM")
+legend("topleft", c('F','M'), 
+       col=1, lty=2:1, lwd=2, bty='n')
+```
+
+Fit a Cox Model
+
+Note that ID is required in the model fit.
+
+```{r}
+cfit <- coxph(Surv(etime, event) ~ sex, data=mgus2, id=id)
+cfit
+```
+
+## Modify the Diagram for Multistate
+
+
+```{r}
+# Create names for the possible states
+states <- c("MGUS", "PCM", "Death")
+connect <- matrix(0, nrow=3, ncol=3, dimnames=list(states, states))
+
+# A non-zero element indicates that an arrow should be drawn
+# between state i (row) and state j (column)
+connect[1, c(2,3)] <- 1
+connect[2,3] <- 1
+connect
+
+# The layout argument is normally a vector of integers indicating how many
+# states are shown in each column.  Here, two columns are specified.  In the first
+# column there is one state and in the second column there are two states.
+statefig(layout=c(1,2), connect)
+```
+
+Are there subjects where PCM and death occur at the same time?
+
+```{r}
+mgus2 %>% filter(pstat==1, death==1, ptime==futime) %>%
+  select(id, ptime, futime, pstat, death)
+```
+
+* What to do with 9 subjects who have PCM & death at the same time?
+  + Cannot have a time of length 0, so push progression back by 0.1 month.
+
+```{r}
+# if subject progresses and death occurs on the same day, 
+# subtract .1 month from the progression time
+ptemp <- with(mgus2, ifelse(ptime==futime & pstat==1, 
+                            ptime-.1, ptime))
+
+# the first call to tmerge sets the time range, 
+# so start with the longest times, which are for death
+newdata <- tmerge(mgus2, mgus2, id=id, 
+                  death=event(futime, death))
+
+# now add additional observations for progressions
+newdata <- tmerge(newdata, mgus2, id, 
+                  pcm = event(ptemp, pstat))
+
+attr(newdata, "tcount")
+
+# first create a 0,1,2 event variable and make it a factor
+temp <- with(newdata, ifelse(death==1, 2, pcm))
+newdata$event <- factor(temp, 0:2, 
+                        labels=c("censor", "pcm", "death")) 
+```
+
+Check the results
+
+```{r}
+survcheck(Surv(tstart, tstop, event) ~ sex, 
+          data=newdata, id=id)
+```
+
+Fit a Cox model
+
+```{r}
+cfit <- coxph(Surv(tstart,tstop,event)~sex, data=newdata, id=id)
+cfit
+```

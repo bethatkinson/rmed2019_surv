@@ -1,0 +1,242 @@
+---
+title: "Creating data for multistate analysis using the nafld data"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+library(hexbin)
+
+## set up options for markdown report
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+               prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
+
+options(stringsAsFactors=F,
+        contrasts=c("contr.treatment","contr.poly"),
+        show.signif.stars = FALSE)
+```
+
+This exercise is more complex example of multistate data, created using the `tmerge` function.
+
+## Outline
+
+* A. Allen, Non-alcoholic fatty liver disease incidence and
+      impact on metabolic burden and death, a 20 year community study.
+      Hepatology 2018, 67:1726--1736.
+* The prevalence of non-alcoholic fatty liver disease (NASH) has risen to 24\%.
+* Now the most common cause of chronic liver disease.
+* Diagnosed with abdominal MRI.
+* NASH = NAFLD + inflammation requires biopsy for diagnosis.
+
+
+```{r}
+ncount <- table(sign(nafld1$ntime), useNA="ifany")
+n2 <- c(ncount[1]+ ncount[2], ncount[2] + ncount[3])
+```
+
+* All NAFLD diagnosis from 1997 to 2014 in Olmsted County, Minnesota.
+* Utilize the Rochester Epidemiology Project
+* One year delay.
+* 4 controls matched on age and sex, then followed forward until the
+    analysis date. 
+* `r n2[1]` cases of NAFLD and `r n2[2]` controls, with
+      `r ncount[2]` subjects that overlap.
+
+
+## Create Diagram
+
+```{r}
+states <- c("No comorbidity", "1 comorbidity", "2 comorbidities", 
+            "3 comorbitities", "Death")
+cmat <- matrix(0, 5,5)
+cmat[,5] <- 1
+cmat[1,2] <- cmat[2,3] <- cmat[3,4] <- 1
+cmat[1,3] <- cmat[2,4] <- 1.6
+cmat[1,4] <- 1.6
+dimnames(cmat) <- list(states, states)
+statefig(cbind(4,1), cmat)
+```
+
+## Data
+
+* `nafld1`: One observation per subject.  Baseline covariates
+      plus follow-up time and death.
+* `nafld2`: Variables of id, days, test, and value.  Contains
+      selected tests and clinical observations.
+* `nafld3`: Variables of id, days, and event type.  One observation
+      for each outcome: occurrence of NASH, hypertension, diabetes, etc.
+* To anonomize patients, all dates have been replaced with ``days
+      since first enrollment''.  
+
+Focus is on:
+
+* Metabolic comorbidities are diabetes, hypertension, and dyslipidemia
+* Focus on a model with 0, 1, 2, 3, of these + death
+* The real work is in building and checking a data set,
+      the fits will be easy.
+ 
+```{r}
+hexbinplot(I(futime/365.25) ~ age, data=nafld1, colramp=rainbow,
+           xlab="Age at entry", ylab="Years of follow-up")
+```
+
+## Create analysis data using tmerge
+
+```{r}
+keep <- c("id", "age", "male", "bmi", "ntime")
+data1 <- tmerge(nafld1[, keep], nafld1, id,  
+                death= event(futime, status))
+data1 <- tmerge(data1, subset(nafld3, event=="nafld"), id,
+                nafld = tdc(days))
+data1 <- tmerge(data1, subset(nafld3, event=="diabetes"), id,
+                diab= tdc(days), e1= event(days))
+data1 <- tmerge(data1, subset(nafld3, event=="htn"), id, 
+                htn= tdc(days), e2= event(days))
+data1 <- tmerge(data1, subset(nafld3, event=="dyslipidemia"), id, 
+                dyslip = tdc(days), e3= event(days))
+attr(data1, 'tcount')
+```
+
+Check data by looking at someone who has four rows in `data1` (has all 4 events).
+
+```{r}
+rowcount <- table(data1$id)
+table(rowcount)    # pick someone with 4 rows
+subset(data1, id == 135, c(id, age, tstart, tstop, nafld,
+                     dyslip, htn, diab, death))
+```
+
+Look at the same subject in `nafld3`
+
+```{r}
+subset(nafld3, id==135)
+```
+
+Create range (death creates the largest range).
+
+```{r}
+test <- tmerge(nafld1[, 1:2], nafld1, id,
+               death = event(futime, status))
+attr(test, "tcount")
+
+subset(test, id==135)
+```
+
+Now add in other information
+
+```{r}
+test <- tmerge(nafld1[, 1:2], nafld1, id, 
+               death = event(futime, status))
+test <- tmerge(test, subset(nafld3, event=="nafld"), id,
+               nafl = tdc(days))
+test <- tmerge(test, subset(nafld3, event=="diabetes"), id,
+                diab= tdc(days), e1= event(days))
+attr(test, "tcount")
+#
+subset(test, id==135)
+```
+
+Now add in other events
+
+```{r}
+test <- tmerge(test, subset(nafld3, event=="htn"), id,
+                htn= tdc(days))
+attr(test, "tcount")
+#
+subset(test, id==135)
+
+test <- tmerge(test, subset(nafld3, event=="dyslipidemia"), id,
+                lip= tdc(days), e3= event(days))
+attr(test, "tcount")
+#
+subset(test, id==135)
+```
+
+Finally, create some additional variables
+
+* `age1`, `age2`: age at start and end of interval
+* `cstate`: number of metabolic conditions so far
+* `endpoint`: censor, 1mc, 2mc, 3mc, death
+
+```{r}
+data1$age1 <- with(data1, age + tstart/365.25)
+data1$age2 <- with(data1, age + tstop/365.25)
+data1$cstate <- with(data1, diab + htn + dyslip)  # TD cov
+
+tcount <- with(data1, e1 + e2 + e3)
+temp2 <- with(data1, ifelse(death, 4, 
+              ifelse(tcount ==0, 0, cstate + tcount)))
+data1$endpoint <- factor(temp2, 0:4, 
+         c("censored", "1mc", "2mc", "3mc", "death"))
+data1$cstate <- factor(data1$cstate, 0:3,
+                c("0mc", "1mc", "2mc", "3mc"))       
+with(data1, table(cstate, endpoint))
+```
+
+Check data
+
+```{r}
+survcheck(Surv(tstart, tstop, endpoint) ~ male + nafld, data=data1, 
+          id=id, istate=cstate)
+```
+
+
+## Fit Models 
+
+```{r}
+nfit1 <- coxph(Surv(age1, age2, death) ~ male + nafld,
+               data=data1)
+nfit2 <- coxph(Surv(age1, age2, death) ~ male + nafld + 
+                   as.numeric(cstate),
+               data=data1)
+nfit3 <- coxph(Surv(age1, age2, death) ~ male + 
+                  strata(cstate)/nafld,  data= data1)
+nfit4a <- coxph(Surv(age1, age2, endpoint %in% c("1mc", "2mc", "3mc")) ~ 
+                      strata(male) + nafld,
+               data=data1, subset= (cstate=="0mc"))
+nfit4b <- coxph(Surv(age1, age2, endpoint %in% c("2mc", "3mc")) ~ 
+                    strata(male) + nafld,
+               data=data1, subset= (cstate== "1mc"))
+nfit4c <- coxph(Surv(age1, age2, endpoint=="3mc") ~ 
+                    strata(male) + nafld,
+               data=data1, subset= (cstate=="2mc"))
+```
+
+Summarize results from fits
+
+```{r}
+mtable <- matrix(NA, 11, 3)
+dimnames(mtable) <- list(c("Alive -> Dead", "Alive -> Dead", "","0 MC -> Dead", 
+                           "1 MC -> Dead", "2 MC -> Dead", "3 MC -> Dead", "",
+                           "0 MC -> 1+ MC", "1 MC -> 2+ MC", "2 MC -> 3 MC"),
+                         c("male sex", "NAFLD", "mcount"))
+mtable[1, 1:2] <- coef(nfit1)
+mtable[2, 1:3] <- coef(nfit2)
+mtable[4:7,1:2] <- cbind(coef(nfit3)[1], coef(nfit3)[-1])
+mtable[9:11, 1:2] <- rbind(coef(nfit4a), coef(nfit4b), coef(nfit4c))
+
+print(round(exp(mtable), 1), na.print="")
+```
+
+* The incremental impact of NAFLD on death decreases
+* The impact on conversion to the next comorbid state decreases.
+* (Allen adds these to figure 4.)
+
+## Fit Aalen-Johansen curves
+
+```{r }
+multi <- survfit(Surv(age1, age2, endpoint) ~ nafld, data=data1,
+                istate=cstate, id=id, se=FALSE, start.time=50)
+multi$states
+plot(multi[,3], col=1:2, xlab='Age', ylab='Probability of 2mc')
+legend("topright", legend=names(multi$strata), 
+       col=1:2, lty=1, bty='n')
+```
+

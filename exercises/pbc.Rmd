@@ -1,5 +1,5 @@
 ---
-title: "Create time-dependent covariate using the jasa data"
+title: "Create time-dependent covariates using the pbcseq data"
 author: "Beth Atkinson"
 output: html_document
 ---
@@ -22,109 +22,97 @@ options(stringsAsFactors=F,
         show.signif.stars = FALSE)
 ```
 
-This exercise is a basic example of creating a time-dependent covariate using the `tmerge` function.
+This exercise is a basic example of creating a time-dependent covariates that are changing values using the `tmerge` function.
 
-# Outline
+## Outline
 
-* Stanford heart transplant data (`jasa`)
-  + wait.time: time before transplant (tx)
-  + futime: follow-up time
-  + fustat: dead or alive
-  + age
+`pbcseq` is from the Mayo Clinic trial in primary biliary cirrhosis (PBC) of the liver conducted between 1974 and 1984. Subjects were randomized to placeobo or D-penicillaimine.
 
-* Create dataset with these variables
-  
-|id | tstart | tstop | death | age |  tx |
-|:---|:-----|:------|:-----|:----|:---------|
-| 1 | .   | . | . | . |
+The data `r nrow(pbcseq)` observations with repeated laboratory values + baseline variables.  
 
+## Explore the `pbcseq` dataset from the `survival` package.
 
-## Explore `jasa` in the `survival` package.
+The variable `day` indicates the day that the lab variables were measured.
 
 ```{r}
-glimpse(jasa)
+glimpse(pbcseq)
+
+## look at 2 people
+pbcseq %>% filter(id %in% c(1,5)) %>% 
+  select(id,futime,status,trt,day, alk.phos, bili) 
+
+## any missing values?
+colSums(is.na(pbcseq))
 ```
 
-## Use tmerge to create a time-dependent covariate
+## Create analysis dataset
 
-Create a subject ID variable
+Create range for when subjects are under observation.
 
 ```{r}
-jasa$id <- 1:nrow(jasa)
+# baseline
+pbc_b <- pbcseq %>% select(id:sex) %>% distinct()
+head(pbc_b)
+
+# Look at status
+table(pbc_b$status)
 ```
 
-Use tmerge to define follow-up region
-
-```{r, eval=FALSE}
-sdata <- tmerge(jasa, jasa, id=id,
-                death = event(futime, fustat))
-```
-
-What happened?
+In this particular instance, transplant (1) and death (2) can both be treated as death (they would have died if they didn't get the transplant).  
 
 ```{r}
-jasa %>% filter(futime==0) %>% 
-  select(id, futime, fustat, wait.time)
+pbc_b$status2 <- as.numeric(pbc_b$status>0)
 ```
 
- => One subject died on the day of entry and (0,0) is an illegal time interval for  `coxph`.  Give the person 1/2 day of follow-up.
+Set range for each subject. 
 
 ```{r}
-jasa$futime <- pmax(0.5, jasa$futime)
+# set range
+newpbc <- tmerge(pbc_b, pbc_b, id=id, 
+                 death = event(futime, status2)) 
+
+attr(newpbc, "tcount")
+newpbc[newpbc$id==220,]
 ```
 
-Rerun and look at the tcount attribute
+Create new TDC variables
 
 ```{r}
-sdata <- tmerge(jasa, jasa, id=id,
-                death = event(futime, fustat))
+newpbc <- tmerge(newpbc, pbcseq, id = id, 
+               ascites = tdc(day, ascites),
+               hepato = tdc(day, hepato),
+               spiders = tdc(day, spiders),
+               edema = tdc(day, edema),
+               bili = tdc(day, bili), 
+               chol = tdc(day, chol),
+               albumin = tdc(day, albumin),
+               alk.phos = tdc(day, alk.phos),
+               ast = tdc(day, ast),
+               platelet = tdc(day, platelet),
+               protime = tdc(day, protime),
+               stage = tdc(day, stage)
+               )
 
-attr(sdata, "tcount")
-sdata[sdata$id==4, c('id','age','tstart','tstop','death')]
+attr(newpbc, "tcount")
+newpbc[newpbc$id==220,]
 ```
 
-Add in wait.time to create an indicator transplant (`tx`) status
+How do missing values come into play?
+
+* Missing values in time or value from `data2` are ignored with the consequence: "last value carried forward" 
+
+* Default can be changed by adding `options=list(na.rm=FALSE)` to the second call 
+    + Any `tdc` calls with a missing time are still ignored, independent
+of the na.rm value, since we would not know where to insert them.
+
+What happens if you add this to the `tmerge` call?
+
+## Run Cox model
 
 ```{r}
-sdata <- tmerge(sdata, jasa, id=id,
-                tx = tdc(wait.time))
+fit <- coxph(Surv(tstart, tstop, death) ~ trt + age + sex + alk.phos, data=newpbc)
+summary(fit)
 
-attr(sdata, "tcount")
-sdata[sdata$id==4, c('id','age','tstart','tstop','death','tx')]
+# Re-scale the hazard ratios (age per 10 year increase, alkphos per 1000 increase)
+summary(fit, scale=c(1,10,1,1000))
 ```
-
-What happens if you call the variable `transplant` instead of `tx`?  Why did this happen?
-
-What does "trailing" mean?
-
-```{r}
-jasa %>% filter(wait.time==futime) %>% 
-         select(id, futime, fustat, wait.time)
-```
-
-=> Trailing - subject died on the same day as their transplant procedure. 
-The problem is resolved by moving the transplant back 0.5 day.
-
-```{r}
-jasa$wait.time <- if_else(jasa$wait.time==jasa$futime, 
-                          jasa$wait.time - .5,
-                          jasa$wait.time)
-```
-
-Rerun again
-
-```{r}
-sdata <- tmerge(sdata, jasa, id=id,
-                tx = tdc(wait.time))
-
-attr(sdata, "tcount")
-sdata[sdata$id==4, c('id','age','tstart','tstop','death','tx')]
-```
-
-## Run a Cox Model
-
-```{r}
-fit <- coxph(Surv(tstart, tstop, death) ~ age + tx, data=sdata)
-fit
-```
-

@@ -678,7 +678,7 @@ fit
 
 * `pbcseq` is from the Mayo Clinic trial in primary biliary cirrhosis (PBC) of the liver conducted between 1974 and 1984. Subjects were randomized to placeobo or D-penicillaimine.
 
-* The data `r nrow(pbcseq)` repeated laboratory values + baseline variables 
+* The data has `r nrow(pbcseq)` observations with repeated laboratory values + baseline variables 
 
 ```{r}
 pbcseq %>% filter(id %in% c(1,5) ) %>% 
@@ -880,7 +880,7 @@ print(rhDNase[rhDNase$id%in%c(1,129),], row.names=F)
 
 ## \textcolor{yellow}{Your Turn}
 
-Use rhDNase:
+Use the `rhDNase` data found in the `survival` package:
 
 1. Create range for when subjects are under observation (`tmerge`)
 2. Create event for each infection (`tmerge`)
@@ -888,6 +888,8 @@ Use rhDNase:
 4. Remove intervals where not at risk
 5. Add a counter for each person (`tmerge`)
 6. Check data and `tcount` attribute
+
+See `exercises/dnase.Rmd`
 
 ## rhDNase
 
@@ -933,7 +935,7 @@ dn2[dn2$id==129,]
 
 ```{r, echo=TRUE}
 dn3 <- tmerge(dn2, dnase, 
-             no.risk=event(pmin(ivstop+6,end.tm)), id=id)
+             no.risk=event(ivstop+6), id=id)
 dn3[dn3$id==129,]
 ```
 
@@ -946,7 +948,7 @@ dn4 <- dn3[dn3$no.risk!=1,]
 
 5. Add a counter for each person
 ```{r, echo=TRUE}
-newdnase <- tmerge(dn4, dn4, enum=cumtdc(dn4$tstart), id=id)
+newdnase <- tmerge(dn4, dn4, enum=cumtdc(tstart), id=id)
 ```
 
 ## rhDNase
@@ -970,21 +972,6 @@ colnames(tmp)[7] <- "trail"
 tmp
 ```
 
-## Maybe more tweaking is needed?
-
-```{r, echo=TRUE}
-table(dnase$ivstart==dnase$end.tm)
-
-dnase %>% filter(ivstart==end.tm) %>%
-  select(id,fev,ivstart,ivstop,end.tm)
-```
-
-## 
-```{r, echo=TRUE}
-newdnase %>% filter(id %in% c(212, 486, 535))
-dnase %>% filter(id %in% c(212, 486, 535)) %>%
-  select(id,fev, ivstart, ivstop, end.tm)
-```
 
 ## `tmerge` summary
 
@@ -1234,6 +1221,25 @@ statefig(c(1,2), cmat4, offset=.03)
 par(oldpar)
 ```
 
+## Monoclonal Gammopathy of Undetermined Significance (MGUS)
+
+* Subjects with a dominant clone in their plasma cell population,
+      but without malignancy ($\ge 2$\% of plasma cells in the clone).  
+* Normally found incidentally to other tests.
+* Should the patient be worried?
+* About 1\% per year convert to overt malignancy.
+* Essentially independent of age and sex.
+
+
+## Example: Progression of MGUS
+
+* 1384 subjects with monoclonal gammopathy of undetermined significance
+      (MGUS)
+* R. Kyle, New Engl J Med 346:564-569 (2002)
+* Questions
+   + Pattern of death and progression
+   + Relationship to age, sex, hemoglobin, creatinine,
+     and amount of protein in the "spike"
 
 ## Example: MGUS data
 
@@ -1269,7 +1275,7 @@ connect
 statefig(layout=c(1,2), connect)
 ```
 
-## Example: MGUS data - Competing Risk
+## Example: MGUS - Competing Risk
 
 Only need 1st event for each subject, so we only need 1 obs/person.
 
@@ -1295,7 +1301,7 @@ library(arsenal)
 summary(freqlist(~ event+pstat+death, data=mgus2))
 ```
 
-## Example: MGUS data - Aalen-Johansen estimate
+## Example: MGUS - Aalen-Johansen estimate
 
 ```{r, echo=TRUE, fig.show='hide'}
 fit <- survfit(Surv(etime, event) ~ sex, data=mgus2)
@@ -1309,7 +1315,7 @@ legend("topleft", c(temp.label),
        col=c(1,1,2,2), lty=c(2,1,2,1), lwd=2, bty='n')
 ```
 
-## Example: MGUS data - Aalen-Johansen estimate 
+## Example: MGUS - Aalen-Johansen estimate 
 
 ```{r}
 plot(fit, col=c(1,1,2,2), lty=c(2,1,2,1),
@@ -1330,7 +1336,7 @@ legend("topleft", c(temp.label),
 summary(fit, time=20, scale=12)
 ```
 
-## Example: MGUS data - Aalen-Johansen estimate
+## Example: MGUS - Aalen-Johansen estimate
 
 * Subset to PCM event
 
@@ -1345,7 +1351,7 @@ fit$strata # rows
 plot(fit, noplot="(s0)")
 ```
 
-## Example: MGUS data - Aalen-Johansen estimate
+## Example: MGUS - Aalen-Johansen estimate
 
 ```{r, echo=TRUE}
 fit[,2] # plot PCM
@@ -1359,7 +1365,7 @@ legend("topleft", c('F','M'),
        col=1, lty=2:1, lwd=2, bty='n')
 ```
 
-## Example: MGUS data - Aalen-Johansen estimate
+## Example: MGUS - Aalen-Johansen estimate
 
 ```{r echo=FALSE}
 plot(fit[,2], col=1, lty=2:1,

@@ -1,5 +1,5 @@
 ---
-title: "Create time-dependent covariate using the jasa data"
+title: "Create multiple events with gap times using the rhDNase data"
 author: "Beth Atkinson"
 output: html_document
 ---
@@ -108,4 +108,10 @@ newdnase[newdnase$id==129,]
 ```{r}
 fit <- coxph(Surv(tstart, tstop, infect) ~ trt + fev, data=newdnase, id=id)
 summary(fit)
+```
+
+## Run `survcheck` on this new data
+
+```{r}
+survcheck(Surv(tstart, tstop, infect) ~ trt + fev, data=newdnase, id=id)
 ```

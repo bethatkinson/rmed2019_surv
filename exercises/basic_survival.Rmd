@@ -128,6 +128,10 @@ Use the covariates age, resid.ds, rx, and ecog.ps.
 cfit <- coxph(Surv(futime,fustat) ~ age + resid.ds + rx + ecog.ps, data=ovarian)
 summary(cfit)
 
+# Re-scale the hazard ratios
+# Age per 10 year increase (vs default of per 1 year increase)
+summary(cfit, scale=c(10,1,1,1))
+
 # Save results in a dataframe using the tidy function in broom
 # Exponentiate and rename the "estimate" to HR (hazard ratio)
 tmp <- tidy(cfit, exponentiate=TRUE)
