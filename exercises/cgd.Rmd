@@ -14,10 +14,15 @@ library(tidyverse)
 library(knitr)
 
 ## set up options for markdown report
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, collapse = TRUE)
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+               prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
+
+options(stringsAsFactors=F,
+        contrasts=c("contr.treatment","contr.poly"),
+        show.signif.stars = FALSE)
 ```
 
-This example highlights how `tmerge` can be used to create multiple events/person.
+This example highlights how `tmerge` can be used to create multiple events/person. Initial dataset is 1 obs/person with event times etime1 - etime 7.
 
 ## Outline
 

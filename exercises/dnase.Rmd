@@ -1,0 +1,111 @@
+---
+title: "Create time-dependent covariate using the jasa data"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+
+## set up options for markdown report
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+               prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
+
+options(stringsAsFactors=F,
+        contrasts=c("contr.treatment","contr.poly"),
+        show.signif.stars = FALSE)
+```
+
+This example highlights how `tmerge` can be used to create multiple events/person and there are intentional gaps where subjects are not at risk for another event. The initial dataset already has multiple obs/subject.
+
+## Outline
+
+1. Create range for when subjects are under observation (`tmerge`)
+2. Create event for each infection (`tmerge`)
+3. Create intervals where they are not at risk (`tmerge`)
+4. Remove intervals where not at risk
+5. Add a counter for each person (`tmerge`)
+6. Check data and `tcount` attribute
+
+
+## Use tmerge to create analysis dataset
+
+Quick look at the data.
+
+```{r}
+glimpse(rhDNase)
+
+# number obs/id
+table(table(rhDNase$id)) 
+
+# number of events (infections)
+table(!is.na(rhDNase$ivstart)) 
+```
+
+Create range for when subjects are under observation.
+
+```{r}
+# create new variable end.tm 
+dnase <- rhDNase %>% arrange(id, ivstart) %>%
+  mutate(end.tm = as.numeric(end.dt - entry.dt)) 
+
+# 1st obs/id (baseline data)
+dnase.b <- dnase %>% distinct(id, .keep_all=TRUE) 
+          
+dn1 <- tmerge(dnase.b[,c('id','inst','trt','fev')], 
+             dnase.b,
+             tstop=end.tm, id=id)
+
+dn1[dn1$id==129, ]
+```
+
+Create event for each infection.
+
+```{r}
+dn2 <- tmerge(dn1, dnase, 
+              infect=event(ivstart), id=id)
+
+attr(dn2, "tcount")
+dn2[dn2$id==129,]
+```
+
+Create intervals where they are not at risk.
+
+```{r}
+dn3 <- tmerge(dn2, dnase, 
+             no.risk=event(ivstop+6), id=id)
+
+attr(dn3, "tcount")
+dn3[dn3$id==129,]
+
+dnase %>% filter(ivstop+6 == end.tm)
+dn3 %>% filter(id==413)
+```
+
+Remove intervals where not at risk.
+
+```{r}
+dn4 <- dn3[dn3$no.risk!=1,]
+```
+
+Add a counter for each person.
+
+```{r}
+newdnase <- tmerge(dn4, dn4, enum=cumtdc(tstart), id=id)
+
+attr(newdnase, "tcount")
+newdnase[newdnase$id==129,]
+```
+
+## Run Cox model
+
+```{r}
+fit <- coxph(Surv(tstart, tstop, infect) ~ trt + fev, data=newdnase, id=id)
+summary(fit)
+```
