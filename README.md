@@ -49,16 +49,16 @@ A basic understanding of R is assumed.
 
 ## Schedule
 
-| Time          | Activity                                   |
-| :------------ | :----------------------------------------- |
-| 01:00 - 01:50 | Session 1 (basic analysis, motivation)     |
-| 01:50 - 02:00 | *Break*                                    |
-| 02:00 - 02:50 | Session 2 (intro to tools)                 |
-| 02:50 - 03:00 | *Break*                                    |
-| 03:00 - 03:50 | Session 3 (checking data, common mistakes) |
-| 03:50 - 04:00 | *Break*                                    |
-| 04:00 - 04:50 | Session 4 (multistate data)                |
-| 04:50 - 05:00 | Wrap-up / Overtime                         |
+| Time          | Activity                                |
+| :------------ | :-------------------------------------- |
+| 01:00 - 01:50 | Session 1 (basic analysis, motivation)  |
+| 01:50 - 02:00 | *Break*                                 |
+| 02:00 - 02:50 | Session 2 (intro to tools, examples)    |
+| 02:50 - 03:00 | *Break*                                 |
+| 03:00 - 03:50 | Session 3 (check data, common mistakes) |
+| 03:50 - 04:00 | *Break*                                 |
+| 04:00 - 04:50 | Session 4 (multistate data)             |
+| 04:50 - 05:00 | Wrap-up / Overtime                      |
 
 ## Instructor
 
