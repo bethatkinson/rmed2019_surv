@@ -27,8 +27,7 @@ options(stringsAsFactors=F,
 
 opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, collapse=TRUE,
                prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE,
-               out.width="\\textwidth", out.height="!",
-               fig.path="figures/")
+               out.width="\\textwidth", out.height="!")
 
 plotTheme <-  theme_bw() +  
               theme(plot.title = element_text(size = 20),  
@@ -558,7 +557,7 @@ tmp
   + Transplant happened after baseline
 
 ```{r}
-naive <- coxph(Surv(futime, fustat) ~ transplant + age, data=jasa)
+naive <- coxph(Surv(futime, fustat) ~ age + transplant, data=jasa)
 naive
 ```
 
@@ -567,17 +566,18 @@ naive
 ## \textcolor{yellow}{Your Turn - Create the Correct Data}
 
 * Stanford heart transplant data (`jasa`)
-  + wait.time: time before transplant
+  + wait.time: time before transplant (tx)
   + futime: follow-up time
   + fustat: dead or alive
   + age
 
 * Create
   
-|id | tstart | tstop | death | age |  transplant |
+|id | tstart | tstop | death | age |  tx |
 |:---|:-----|:------|:-----|:----|:---------|
 | 1 | .   | . | . | . |
 
+See the file `exercises/jasa.Rmd`.
 
 ## Stanford Heart Transplant
 
@@ -585,7 +585,7 @@ naive
 jasa$id <- 1:nrow(jasa)
 sdata <- tmerge(jasa, jasa, id=id,
                 death = event(futime, fustat),
-                transplant = tdc(wait.time))
+                tx = tdc(wait.time))
 ```
 
 ![](figures/error.PNG)
@@ -614,7 +614,7 @@ jasa$futime <- pmax(0.5, jasa$futime)
 ```{r, echo=TRUE}
 sdata <- tmerge(jasa, jasa, id=id,
                 death = event(futime, fustat),
-                transplant = tdc(wait.time))
+                tx = tdc(wait.time))
 ```
 
 ```{r, echo=TRUE, eval=FALSE}
@@ -649,7 +649,7 @@ jasa$wait.time <- if_else(jasa$wait.time==jasa$futime,
 ```{r, echo=TRUE}
 sdata <- tmerge(jasa, jasa, id=id,
                 death = event(futime, fustat),
-                transplant = tdc(wait.time))
+                tx = tdc(wait.time))
 ```
 
 ```{r, echo=TRUE, eval=FALSE}
@@ -668,7 +668,7 @@ tmp
 ## Cox Model
 
 ```{r, echo=TRUE}
-fit <- coxph(Surv(tstart, tstop, death) ~ age + transplant, 
+fit <- coxph(Surv(tstart, tstop, death) ~ age + tx, 
              data=sdata)
 fit
 ```
@@ -783,6 +783,8 @@ closed on the right, i.e.,  (tstart, tstop].
 | 1 | .   | . | . | . | . |
 
 where `enum` is the interval number/id
+
+See `exercises/cgd.Rmd`
 
 ## CGD 
 

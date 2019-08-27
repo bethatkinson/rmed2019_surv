@@ -1,0 +1,125 @@
+---
+title: "Create time-dependent covariate using the jasa data"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+
+## set up options for markdown report
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, collapse = TRUE)
+```
+
+This exercise is a basic example of creating a time-dependent covariate using the `tmerge` function.
+
+# Outline
+
+* Stanford heart transplant data (`jasa`)
+  + wait.time: time before transplant (tx)
+  + futime: follow-up time
+  + fustat: dead or alive
+  + age
+
+* Create dataset with these variables
+  
+|id | tstart | tstop | death | age |  tx |
+|:---|:-----|:------|:-----|:----|:---------|
+| 1 | .   | . | . | . |
+
+
+## Explore `jasa` in the `survival` package.
+
+```{r}
+glimpse(jasa)
+```
+
+## Use tmerge to create a time-dependent covariate
+
+Create a subject ID variable
+
+```{r}
+jasa$id <- 1:nrow(jasa)
+```
+
+Use tmerge to define follow-up region
+
+```{r, eval=FALSE}
+sdata <- tmerge(jasa, jasa, id=id,
+                death = event(futime, fustat))
+```
+
+What happened?
+
+```{r}
+jasa %>% filter(futime==0) %>% 
+  select(id, futime, fustat, wait.time)
+```
+
+ => One subject died on the day of entry and (0,0) is an illegal time interval for  `coxph`.  Give the person 1/2 day of follow-up.
+
+```{r}
+jasa$futime <- pmax(0.5, jasa$futime)
+```
+
+Rerun and look at the tcount attribute
+
+```{r}
+sdata <- tmerge(jasa, jasa, id=id,
+                death = event(futime, fustat))
+
+attr(sdata, "tcount")
+sdata[sdata$id==4, c('id','age','tstart','tstop','death')]
+```
+
+Add in wait.time to create an indicator transplant (`tx`) status
+
+```{r}
+sdata <- tmerge(sdata, jasa, id=id,
+                tx = tdc(wait.time))
+
+attr(sdata, "tcount")
+sdata[sdata$id==4, c('id','age','tstart','tstop','death','tx')]
+```
+
+What happens if you call the variable `transplant` instead of `tx`?  Why did this happen?
+
+What does "trailing" mean?
+
+```{r}
+jasa %>% filter(wait.time==futime) %>% 
+         select(id, futime, fustat, wait.time)
+```
+
+=> Trailing - subject died on the same day as their transplant procedure. 
+The problem is resolved by moving the transplant back 0.5 day.
+
+```{r}
+jasa$wait.time <- if_else(jasa$wait.time==jasa$futime, 
+                          jasa$wait.time - .5,
+                          jasa$wait.time)
+```
+
+Rerun again
+
+```{r}
+sdata <- tmerge(sdata, jasa, id=id,
+                tx = tdc(wait.time))
+
+attr(sdata, "tcount")
+sdata[sdata$id==4, c('id','age','tstart','tstop','death','tx')]
+```
+
+## Run a Cox Model
+
+```{r}
+fit <- coxph(Surv(tstart, tstop, death) ~ age + tx, data=sdata)
+fit
+```
+
