@@ -55,8 +55,9 @@ plotTheme <-  theme_bw() +
 
 ## Logistics
 
-* All code shown based on https://github.com/therneau/survival (version 3.0)
+* All code shown based on the latest/greatest version of the `survival` package (3.0)
 * Slides/Example code available at https://github.com/bethatkinson/rmed2019_survival
+  + Examples loaded into RStudio Cloud - https://rstudio.cloud/project/475200
 
 ```{r  out.width = "20%"}
 include_graphics('figures/logo.png') 

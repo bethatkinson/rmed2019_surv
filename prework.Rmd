@@ -19,7 +19,7 @@ Welcome to the [Wrangling Survival Data](https://github.com/bethatkinson/rmed201
     install.packages(c("survival", "survminer", "tidyverse",
                        "lubridate", "arsenal", "broom"))
     ```
-
+    
 1. Don't forget your power cord!
 
 On the day of the workshop, I'll provide you with an RStudio Cloud project that contains all of the course materials. We will use the software listed above only as an important backup should there be problems with the on-site internet connection.
