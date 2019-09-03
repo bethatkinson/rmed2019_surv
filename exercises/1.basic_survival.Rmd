@@ -14,7 +14,7 @@ library(tidyverse)
 library(knitr)
 
 ## set up options for markdown report
-knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
                prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
 
 options(stringsAsFactors=F,
@@ -112,7 +112,7 @@ par(cex=1, mai=c(1.02,.82,.82,.42), fig=c(0,1,0,1))
 summary(fit, time=seq(0,2,.5), scale=365)
 ```
 
-### Create summary using the `arsenal::tableby` function
+### Create summary using the `tableby` function found in the `arsenal` package
 
 ```{r, results='asis'}
 tab <- tableby(rx ~ age + resid.ds + Surv(futime,fustat), data=ovarian)

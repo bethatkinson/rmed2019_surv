@@ -103,6 +103,10 @@ attr(newdnase, "tcount")
 newdnase[newdnase$id==129,]
 ```
 
+* What does "early" mean?  How would you look for these subjects?
+* What does "late" mean?  Is that ok?
+* How about the "trailing" values?  Is that ok?
+
 ## Run Cox model
 
 ```{r}

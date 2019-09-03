@@ -72,7 +72,7 @@ statefig(cbind(4,1), cmat)
       selected tests and clinical observations.
 * `nafld3`: Variables of id, days, and event type.  One observation
       for each outcome: occurrence of NASH, hypertension, diabetes, etc.
-* To anonomize patients, all dates have been replaced with ``days
+* To anonymize patients, all dates have been replaced with ``days
       since first enrollment''.  
 
 Focus is on:

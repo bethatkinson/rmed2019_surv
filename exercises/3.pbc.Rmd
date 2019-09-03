@@ -110,9 +110,41 @@ What happens if you add this to the `tmerge` call?
 ## Run Cox model
 
 ```{r}
-fit <- coxph(Surv(tstart, tstop, death) ~ trt + age + sex + alk.phos, data=newpbc)
+fit <- coxph(Surv(tstart, tstop, death) ~ trt + age + sex + bili, data=newpbc)
 summary(fit)
 
 # Re-scale the hazard ratios (age per 10 year increase, alkphos per 1000 increase)
 summary(fit, scale=c(1,10,1,1000))
+```
+
+# Evaluate Time delay for covariates 
+
+Assume that the impact of changes in the lab values don't happen for 14 days.  Do the results change?
+
+```{r}
+newpbc2 <- newpbc <- tmerge(newpbc, pbcseq, id = id, 
+               ascites2 = tdc(day, ascites),
+               hepato2 = tdc(day, hepato),
+               spiders2 = tdc(day, spiders),
+               edema2 = tdc(day, edema),
+               bili2 = tdc(day, bili), 
+               chol2 = tdc(day, chol),
+               albumin2 = tdc(day, albumin),
+               alk.phos2 = tdc(day, alk.phos),
+               ast2 = tdc(day, ast),
+               platelet2 = tdc(day, platelet),
+               protime2 = tdc(day, protime),
+               stage2 = tdc(day, stage),
+               options=list(delay=14)
+               )
+```
+
+Refit the Cox model.
+
+```{r}
+fit2 <- coxph(Surv(tstart, tstop, death) ~ trt + age + sex + bili2, data=newpbc2)
+summary(fit2)
+
+cbind(orig=coef(fit),
+      delay=coef(fit2))
 ```

@@ -1,7 +1,7 @@
 ---
 title: "Wrangling Survival Data"
 subtitle: "From Time-dependent Covariates to Multistate Endpoints"
-date: "Beth Atkinson  \n September 12, 2019"
+date: "Beth Atkinson \n September 12, 2019"
 output: 
   beamer_presentation:
     toc: false
@@ -27,7 +27,7 @@ options(stringsAsFactors=F,
 
 opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, collapse=TRUE,
                prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE,
-               out.width="\\textwidth", out.height="!")
+               out.width="90%", out.height="!")
 
 plotTheme <-  theme_bw() +  
               theme(plot.title = element_text(size = 20),  
@@ -72,7 +72,8 @@ include_graphics('figures/logo.png')
   + Liver transplant
   + Death
   + ...
-* I study osteoporosis in a population-based cohort, so many of my examples deal with fractures 
+* I study osteoporosis in population-based cohorts, so many of my examples deal with fractures 
+* I started off using Splus in 1990 so my code is a mix of base R and tidyverse
 
 ## Premise
 
@@ -84,11 +85,11 @@ Most statistics discussions focus on the analysis and assume the data is already
 
 ## Some principles of data creation
 
-* Correct is more important than fast: Don't worry if the code takes a bit to run.  We often do dozens of fits to a dataset
+* Correct is more important than fast: Don't worry if the code takes a bit to run.  We often do dozens of fits using one dataset
 * Correct is more important than clever
 * Readable is more important than short  
 * Use every data check opportunity available
-* Comments are your friend, or better yet make the data creation an Rmd file with text >> code
+* Comments are your friend, or better yet make the data creation an Rmd file with text explaining the code
 
 
 ## Key Principle
@@ -308,7 +309,7 @@ fit
 
 ## \textcolor{yellow}{Your Turn - Run basic analysis}
 
-* See rmed2019_surv/exercises/basic_survival.Rmd
+* See exercises/1.basic_survival.Rmd
 
 # Start/Stop Data
 
@@ -337,9 +338,12 @@ ggplot(tmpdat, aes(futime,subj, color=treated)) +
 ## Time-Dependent Covariates
 
 * Lab values that change over time (`pbcseq` data)
-* On and off of medication
+* Medication
+  + Ever exposed
   + Cumulative dose
+  + On and off
 * Diagnosis of new comorbidity (e.g., diabetes)
+* Surgery
 
 ## Multiple Events/Same Type
 
@@ -355,7 +359,7 @@ ggplot(tmpdat, aes(futime,subj)) +
 
 * Fractures
 * Repeat infections (`rhDNase`, `cgd` data)
-* Number of recurrences (`bladder` data)
+* Number of recurrences of cancer (`bladder` data)
 
 ## Left Truncation
 
@@ -402,8 +406,10 @@ ggplot(tmpdat, aes(futime,subj, color=treated)) +
 
 ## Analysis by Time Period
 
-* Risk of event during 1st 5 years after cancer is different than afterwards
-* Effect of baseline lab variable decreases over time
+* Risk of event during first 5 years after cancer is different than afterwards
+* Effect decreases over time
+  + baseline lab variable
+  + treatment
 
 ## Simple Example: Data we have 
 
@@ -513,6 +519,19 @@ tmerge(data1=d1, data2=d2, id=id,
 
 ## `tcount` attribute
 
+```{r, echo=TRUE, eval=FALSE}
+attr(step2, "tcount")
+```
+
+```{r}
+tmp <- attr(step2, "tcount")
+colnames(tmp)[6] <- "lead"
+colnames(tmp)[7] <- "trail"
+tmp
+```
+
+## `tcount` attribute
+
 `tcount` - a tool to check data
 
 * Time outside the specified time frame.
@@ -539,17 +558,13 @@ text(c(5, 15, 21, 26, 31, 70), rep(c(1.5, .5), 3),
      c("early", "within", "gap", "leading", "trailing", "late"))
 ```
 
-## Example `tcount` attribute
+## `tcount` attribute
 
-```{r, echo=TRUE, eval=FALSE}
-attr(step2, "tcount")
-```
+* 3 *trailing* deaths 
+* 2 *within* splits with surgery
 
 ```{r}
-tmp <- attr(step2, "tcount")
-colnames(tmp)[6] <- "lead"
-colnames(tmp)[7] <- "trail"
-tmp
+step2
 ```
 
 ## Example: Original Analysis, Stanford heart transplant data
@@ -578,7 +593,7 @@ naive
 |:---|:-----|:------|:-----|:----|:---------|
 | 1 | .   | . | . | . |
 
-See the file `exercises/jasa.Rmd`.
+See the file `exercises/2.jasa.Rmd`.
 
 ## Stanford Heart Transplant
 
@@ -677,7 +692,7 @@ fit
 
 ## Example: Continuous values that change over time
 
-* `pbcseq` is from the Mayo Clinic trial in primary biliary cirrhosis (PBC) of the liver conducted between 1974 and 1984. Subjects were randomized to placeobo or D-penicillaimine.
+* `pbcseq` is from the Mayo Clinic trial in primary biliary cirrhosis (PBC) of the liver conducted between 1974 and 1984. `r length(unique(pbcseq$id))` subjects were randomized to placebo or D-penicillamine.
 
 * The data has `r nrow(pbcseq)` observations with repeated laboratory values + baseline variables 
 
@@ -702,7 +717,7 @@ head(pbc_b)
 table(pbc_b$status)
 ```
 
-After discussion with investigator, decide that in this instance, transplant (1) and death (2) can both be treated as death.  
+After discussion with investigator, decided that in this instance, transplant (1) and death (2) can both be treated as death.  
 
 ```{r, echo=TRUE}
 pbc_b$status2 <- as.numeric(pbc_b$status>0)
@@ -756,6 +771,9 @@ tmp
     + Any `tdc` calls with a missing time are still ignored, independent
 of the na.rm value, since we would not know where to insert them.
 
+## 
+
+Code available in `3.pbc.Rmd`
 
 ## How covariates differ from events
 
@@ -785,7 +803,7 @@ closed on the right, i.e.,  (tstart, tstop].
 
 where `enum` is the interval number/id
 
-See `exercises/cgd.Rmd`
+See `exercises/4.cgd.Rmd`
 
 ## CGD 
 
@@ -823,8 +841,8 @@ newcgd %>% filter(id==2) %>%
 ## CGD
 
 ```{r, echo=TRUE}
-fit <- coxph(Surv(tstart,tstop,infect) ~ treat + steroids + 
-               inherit, id=id, data=newcgd)
+fit <- coxph(Surv(tstart,tstop,infect) ~ treat +  
+            steroids + inherit, id=id, data=newcgd)
 fit
 ```
 
@@ -843,7 +861,7 @@ round(cbind(first=coef(fit0),all=coef(fit)), 3)
 * *Time dependent covariates* that occur before the start of a subject's
 follow-up interval or during a gap in time do not generate a new interval split, but they do set the value of that covariate for future times.
     + During a subject's time under observation we would
-like the variable "Has Diabetes"
+like the variable "Has diabetes"
 to be accurate 
 * *Events* that occur in a gap are not counted.
     + Don't know the appropriate comparison group, so we ignore those events.  
@@ -890,39 +908,43 @@ Use the `rhDNase` data found in the `survival` package:
 5. Add a counter for each person (`tmerge`)
 6. Check data and `tcount` attribute
 
-See `exercises/dnase.Rmd`
+See `exercises/5.dnase.Rmd`
 
 ## rhDNase
 
-0. Quick look at the data
+Quick look at the data
 
 ```{r, echo=TRUE}
 dim(rhDNase)
 head(rhDNase)
 ```
 
-##
+## rhDNase
 
 ```{r, echo=TRUE}
 table(table(rhDNase$id)) # number obs/id
 table(!is.na(rhDNase$ivstart)) # number events
 ```
 
-1. Create range for when subjects are under observation
+## rhDNase
+
+Create range for when subjects are under observation
 
 ```{r echo=TRUE}
+# Make sure data is sorted by id, ivstart time
 dnase <- rhDNase %>% arrange(id,ivstart) %>%
   mutate(end.tm = as.numeric(end.dt - entry.dt)) 
-dnase.b <- dnase %>% distinct(id, .keep_all=TRUE) # 1st obs/id
+
+# 1st obs/id
+dnase.b <- dnase %>% distinct(id, .keep_all=TRUE) 
           
 dn1 <- tmerge(dnase.b[,c('id','inst','trt','fev')], 
-             dnase.b,
-             tstop=end.tm, id=id)
+             dnase.b, tstop=end.tm, id=id)
 ```
 
 ## rhDNase
 
-2. Create event for each infection
+Create event for each infection
 
 ```{r echo=TRUE}
 dn2 <- tmerge(dn1, dnase, 
@@ -932,7 +954,7 @@ dn2[dn2$id==129,]
 
 ## rhDNase
 
-3. Create intervals where they are not at risk
+Create intervals where they are not at risk
 
 ```{r, echo=TRUE}
 dn3 <- tmerge(dn2, dnase, 
@@ -942,19 +964,20 @@ dn3[dn3$id==129,]
 
 ## rhDNase
 
-4. Remove intervals where not at risk
+Remove intervals where not at risk
+
 ```{r, echo=TRUE}
 dn4 <- dn3[dn3$no.risk!=1,]
 ```
 
-5. Add a counter for each person
+Add a counter for each person
 ```{r, echo=TRUE}
 newdnase <- tmerge(dn4, dn4, enum=cumtdc(tstart), id=id)
 ```
 
 ## rhDNase
 
-6. Check to make sure code worked correct
+Check to make sure code worked correct
 
 ```{r echo=TRUE}
 newdnase[newdnase$id==129,] 
@@ -1056,7 +1079,7 @@ ck1 <- survcheck(formula, data, id, istate)
   + teleport: 2 adjacent intervals, change in state
   + jump: hole in timeline, change in state
 
-## Example: Multiple Events/Same type
+## Example: Multiple Events/Same type (`newcgd`)
 
 ```{r}
 knitr::asis_output("\\footnotesize")
@@ -1064,7 +1087,7 @@ survcheck(Surv(tstart,tstop,infect) ~ treat,
           data=newcgd, id=id)
 ```
 
-## Example: Gaps - rhDNase data
+## Example: Gaps (`newdnase`)
 
 ```{r}
 knitr::asis_output("\\footnotesize")
@@ -1073,7 +1096,7 @@ tmp <- survcheck(Surv(tstart,tstop,infect)~trt,
 tmp
 ```
 
-## Example: Gaps - rhDNase data
+## Example: Gaps (`newdnase`)
 
 ```{r, echo=TRUE}
 length(tmp$gap$id)
@@ -1097,9 +1120,7 @@ die, do so before week 8
 
 ## Common Mistake: KM Curves using Time-Dep Covariates
 
-Suppose you have created a time-dependent covariate and the researcher wants a Kaplan-Meier curve.  Is that ok?
-
-** ADD IN INFO ABOUT INTERPRETING KM CURVES **
+Suppose you have created a time-dependent covariate and the researcher wants a Kaplan-Meier curve.  Is that ok?  How would you interpret it?
 
 Instead, consider using landmark analysis.  Consider a point in time (e.g., 1 year) and use the covariate status as it was known at 1 year.  Start follow-up at that time point.
 
@@ -1110,7 +1131,7 @@ they are markers of a failure-in-progress:
 
 * Multiple-organ failure
 * Ventilation
-* “Have called the priest”
+* “Called the priest”
 * Medication changes
   + Cessation of diuretics in heart failure
 * PSA and prostate cancer, if measurement and declaration occur on the
@@ -1348,7 +1369,7 @@ fit$strata # rows
 
 * Do not plot this curve
 
-```{r echo=TRUE}
+```{r echo=TRUE, eval=FALSE}
 plot(fit, noplot="(s0)")
 ```
 
@@ -1455,6 +1476,7 @@ tmp
 ## MGUS: Multistate
 
 ```{r, echo=TRUE}
+with(newdata, table(death, pcm))
 # first create a 0,1,2 event variable and make it a factor
 temp <- with(newdata, ifelse(death==1, 2, pcm))
 newdata$event <- factor(temp, 0:2, 
@@ -1497,7 +1519,12 @@ knitr::asis_output("\\footnotesize")
 
 ## MGUS: Multistate
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, eval=FALSE}
+cfit <- coxph(Surv(tstart,tstop,event)~sex, data=newdata, id=id)
+```
+
+```{r, echo=FALSE, eval=TRUE}
+knitr::asis_output("\\footnotesize")
 cfit <- coxph(Surv(tstart,tstop,event)~sex, data=newdata, id=id)
 cfit
 ```
@@ -1551,14 +1578,14 @@ statefig(cbind(4,1), cmat)
       selected tests and clinical observations.
 * `nafld3`: Variables of id, days, and event type.  One observation
       for each outcome: occurrence of NASH, hypertension, diabetes, etc.
-* To anonomize patients, all dates have been replaced with ``days
+* To anonymize patients, all dates have been replaced with ``days
       since first enrollment''.  
 
 ## NAFLD: Data
 
 * Metabolic comorbidities are diabetes, hypertension, and dyslipidemia
 * Focus on a model with 0, 1, 2, 3, of these + death
-* The real work is in building and checking a data set,
+* The real work is in building and checking a dataset;
       the fits will be easy.
  
 ## 
@@ -1581,14 +1608,26 @@ data1 <- tmerge(data1, subset(nafld3, event=="htn"), id,
                 htn= tdc(days), e2= event(days))
 data1 <- tmerge(data1, subset(nafld3, event=="dyslipidemia"), id, 
                 dyslip = tdc(days), e3= event(days))
-attr(data1, 'tcount')
+```
+
+##
+
+```{r, echo=TRUE, eval=FALSE}
+attr(data1, "tcount")
+```
+
+```{r}
+tmp <- attr(data1, "tcount")
+colnames(tmp)[6] <- "lead"
+colnames(tmp)[7] <- "trail"
+tmp
 ```
 
 ## NAFLD: Four row subject from `data1`
 
 ```{r}
-rowcount <- table(data1$id)
-table(rowcount)    # pick someone with 4 rows
+#rowcount <- table(data1$id)
+#table(rowcount)    # pick someone with 4 rows
 subset(data1, id == 135, c(id, age, tstart, tstop, nafld,
                      htn, diab, dyslip, death))
 ```
@@ -1605,7 +1644,7 @@ subset(nafld3, id==135)
 test <- tmerge(nafld1[, 1:2], nafld1, id,
                death = event(futime, status))
 attr(test, "tcount")
-#
+
 subset(test, id==135)
 ```
 
@@ -1618,7 +1657,7 @@ test <- tmerge(test, subset(nafld3, event=="nafld"), id,
                nafld = tdc(days))
 
 attr(test, "tcount")
-#
+
 subset(test, id==135)
 ```
 
@@ -1632,7 +1671,7 @@ test <- tmerge(test, subset(nafld3, event=="nafld"), id,
 test <- tmerge(test, subset(nafld3, event=="diabetes"), id,
                 diab= tdc(days), e1= event(days))
 attr(test, "tcount")
-#
+
 subset(test, id==135)
 ```
 
@@ -1642,7 +1681,7 @@ subset(test, id==135)
 test <- tmerge(test, subset(nafld3, event=="htn"), id,
                 htn= tdc(days))
 attr(test, "tcount")
-#
+
 subset(test, id==135)
 ```
 
@@ -1652,7 +1691,7 @@ subset(test, id==135)
 test <- tmerge(test, subset(nafld3, event=="dyslipidemia"), id,
                 lip= tdc(days), e3= event(days))
 attr(test, "tcount")
-#
+
 subset(test, id==135)
 ```
 
@@ -1732,7 +1771,7 @@ knitr::asis_output("\\footnotesize")
   + Time since "your number was chosen out of a hat" for the
           controls?
   + Age and sex need to be in the model, and the model for them
-          nees to be *correct*
+          needs to be *correct*
   + The population death rate ranges from .03--500 /1000 over
           this age span; a small lack of fit in the age*sex modeling 
           can dominate all other covariates.

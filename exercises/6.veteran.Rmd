@@ -1,0 +1,88 @@
+---
+title: "Create multistate events using the mgus2 data"
+author: "Beth Atkinson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## load libraries
+library(survival)
+library(survminer)
+library(arsenal)
+library(broom)
+library(tidyverse)
+library(knitr)
+
+## set up options for markdown report
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+               prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
+
+options(stringsAsFactors=F,
+        contrasts=c("contr.treatment","contr.poly"),
+        show.signif.stars = FALSE)
+```
+
+This exercise is an example of splitting up the observation time into "chunks".
+
+## Description of the veteran cohort.
+
+Randomised trial of two treatment regimens for lung cancer. 
+
+* time:	survival time
+* status:	censoring status (0=censor, 1=dead)
+* trt:	1=standard 2=test
+* celltype:	1=squamous, 2=smallcell, 3=adeno, 4=large
+* karno:	Karnofsky performance score (100=good)
+* diagtime:	months from diagnosis to randomisation
+* age:	in years
+* prior:	prior therapy 0=no, 10=yes
+
+```{r}
+# look at the dataset
+glimpse(veteran)
+```
+
+Fit a Cox model - motivation
+
+```{r}
+fit1 <- coxph(Surv(time, status) ~ karno, data=veteran)
+plot(cox.zph(fit1), lwd=2)
+abline(h=0, col=2)
+```
+
+## Split data
+
+```{r}
+# prior to splitting
+veteran$id <- 1:nrow(veteran)
+veteran[1:4, c('id','time','status','age','trt')]
+
+vet2 <- survSplit(Surv(time, status) ~., veteran,
+                   cut=c(60, 120), episode ="timegp")
+
+# after splitting
+vet2 %>% filter(id %in% 1:4) %>% select(id, tstart, time, status,timegp, age, trt)
+```
+
+What if you wanted to change age at the beginning of each interval?  How would you do that?
+
+## Run Cox model on new data
+
+```{r}
+fit2 <- coxph(Surv(tstart, time, status) ~ 
+                   karno:strata(timegp),
+              data = vet2)
+```
+
+Compare coefficients.
+
+```{r}
+# original 
+round(coef(fit1), 3)
+
+# within time period
+tmp <- round(coef(fit2), 3)
+names(tmp) <- c('t0_60','t60_120','t120+')
+
+tmp
+```

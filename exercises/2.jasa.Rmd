@@ -14,7 +14,7 @@ library(tidyverse)
 library(knitr)
 
 ## set up options for markdown report
-knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
+opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE, collapse=TRUE,
                prompt=TRUE, cache=FALSE, comment=NA, tidy=FALSE)
 
 options(stringsAsFactors=F,
@@ -95,7 +95,7 @@ sdata[sdata$id==4, c('id','age','tstart','tstop','death','tx')]
 
 What happens if you call the variable `transplant` instead of `tx`?  Why did this happen?
 
-What does "trailing" mean?
+What does "trailing" mean?  
 
 ```{r}
 jasa %>% filter(wait.time==futime) %>% 
@@ -110,6 +110,8 @@ jasa$wait.time <- if_else(jasa$wait.time==jasa$futime,
                           jasa$wait.time - .5,
                           jasa$wait.time)
 ```
+
+What does leading mean?  Should we be concerned?
 
 Rerun again
 
