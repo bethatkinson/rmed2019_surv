@@ -19,7 +19,7 @@ Welcome to the [Wrangling Survival Data](https://github.com/bethatkinson/rmed201
     install.packages(c("survival", "survminer", "tidyverse",
                        "lubridate", "arsenal", "broom"))
     ```
-    + On RStudio cloud I have installed the latest version of the `survival` package (3.0.11).  It has been submitted to CRAN and hopefully will available shortly.
+    + Note: On RStudio cloud I have installed the latest version of the `survival` package (3.0.11).  It has been submitted to CRAN and hopefully will available shortly.
     
 1. Don't forget your power cord!
 
