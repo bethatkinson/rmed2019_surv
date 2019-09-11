@@ -75,7 +75,7 @@ attr(newpbc, "tcount")
 newpbc[newpbc$id==220,]
 ```
 
-Create new TDC variables.  Examples are shown for a few of the lab variables.  Add in chol, ast, platelet, and protime.
+Create new TDC variables
 
 ```{r}
 newpbc <- tmerge(newpbc, pbcseq, id = id, 
@@ -84,8 +84,12 @@ newpbc <- tmerge(newpbc, pbcseq, id = id,
                spiders = tdc(day, spiders),
                edema = tdc(day, edema),
                bili = tdc(day, bili), 
+               chol = tdc(day, chol),
                albumin = tdc(day, albumin),
                alk.phos = tdc(day, alk.phos),
+               ast = tdc(day, ast),
+               platelet = tdc(day, platelet),
+               protime = tdc(day, protime),
                stage = tdc(day, stage)
                )
 
