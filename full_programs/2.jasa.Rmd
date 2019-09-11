@@ -103,7 +103,26 @@ jasa %>% filter(wait.time==futime) %>%
          select(id, futime, fustat, wait.time)
 ```
 
+=> Trailing indicates that the subject died on the same day as their transplant procedure.  The problem was resolved by moving the transplant back 0.5 day.
+
+```{r}
+jasa$wait.time <- if_else(jasa$wait.time==jasa$futime,
+                          jasa$wait.time - .5,
+                          jasa$wait.time)
+```
+
 What does leading mean?  Should we be concerned?
+
+Rerun the data creation again.
+
+```{r}
+sdata <- tmerge(sdata, jasa, id=id,
+                tx=tdc(wait.time))
+
+attr(sdata, 'tcount')
+sdata[sdata$id==4, c('id','age','tstart','tstop','death','tx')]
+```
+
 
 ## Run a Cox Model
 
