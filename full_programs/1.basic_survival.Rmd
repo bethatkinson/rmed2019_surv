@@ -61,9 +61,9 @@ quantile(fit, probs=.25)
    + Add labels
    
 ```{r}
-plot(fit, xlim=c(0, 2*365), 
+plot(fit, scale=365, xlim=c(0, 2*365), 
      col=1:2, lty=1:2, 
-     xlab='Time since enrollment, days', 
+     xlab='Time since enrollment, years', 
      ylab='Survival probability')
 legend('topright', legend=names(fit$strata), 
        col=1:2, lty=1:2, bty='n')
@@ -75,10 +75,10 @@ Change the time scale to years instead of days.
 2. Repeat plot using the `survminer` package
 
 ```{r}
-ggsurvplot(fit, xlim=c(0, 2*365), 
+ggsurvplot(fit, xscale=365, xlim=c(0, 2*365), 
            censor=FALSE, break.x.by=365/2,
            risk.table=TRUE,
-           xlab='Time since enrollment, days', 
+           xlab='Time since enrollment, years', 
            ylab='Survival probability')
 ```
 
