@@ -56,8 +56,9 @@ plotTheme <-  theme_bw() +
 ## Logistics
 
 * All code shown based on the latest/greatest version of the `survival` package (3.0)
-* Slides/Example code available at https://github.com/bethatkinson/rmed2019_survival
+* Slides/Example code available at https://github.com/bethatkinson/rmed2019_surv
   + Examples loaded into RStudio Cloud - https://rstudio.cloud/project/475200
+* Email: atkinson@mayo.edu
 
 ```{r  out.width = "20%"}
 include_graphics('figures/logo.png') 
@@ -421,7 +422,7 @@ ggplot(tmpdat, aes(futime,subj, color=treated)) +
 ## d1 includes baseline data to be retained in the analysis dataset
 d1 <- data.frame(id=1:3,age=c(40,20,50))
 ## d2 includes data with event and TD covariate information
-d2 <- data.frame(id=1:3, tm_surg=c(5,8,NA), tm_fu=c(10, 20, 30), event=c(0,1,1))
+d2 <- data.frame(id=1:3, tm_fu=c(10, 20, 30), event=c(0,1,1), tm_surg=c(5,8,NA))
 kable(merge(d1, d2, by='id')[,c('id','age','tm_fu','event','tm_surg')], row.names=F)
 ```
 
@@ -571,6 +572,7 @@ step2
 
 * Original analysis used: futime, fustat, transplant status, and age
   + Transplant happened after baseline
+  + `jasa` dataset
 
 ```{r}
 naive <- coxph(Surv(futime, fustat) ~ age + transplant, data=jasa)
@@ -591,7 +593,7 @@ naive
   
 |id | tstart | tstop | death | age |  tx |
 |:---|:-----|:------|:-----|:----|:---------|
-| 1 | .   | . | . | . |
+| 1 | .   | . | . | . | .|
 
 See the file `exercises/2.jasa.Rmd`.
 
@@ -784,8 +786,6 @@ Code available in `3.pbc.Rmd`
 *  Events 
     + Occur at the *end* of an interval
     + Only occur once
-    + In time-to-event analyses, time intervals are open on the left and
-closed on the right, i.e.,  (tstart, tstop].
 
 
 ## \textcolor{yellow}{Your Turn}
@@ -1818,6 +1818,6 @@ legend("topright", legend=names(multi$strata),
 ## 
 
 ```{r echo=FALSE}
-plot(multi[,3], col=1:2, xlab='Age', ylab='Probability of 2mc')
+plot(multi[,3], col=1:2, xlab='Age', ylab='Probability of 2mc', xlim=c(50,100))
 legend("topright", legend=names(multi$strata), col=1:2, lty=1, bty='n')
 ```

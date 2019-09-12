@@ -134,6 +134,8 @@ cfit <- coxph(Surv(etime, event) ~ sex, data=mgus2, id=id)
 cfit
 ```
 
+What if you created a new event variable, event2, that is true for 'pcm' and fit a Cox model using that.  Are the coefficients the same?
+
 ## Modify the Diagram for Multistate
 
 
